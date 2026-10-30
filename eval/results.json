@@ -1,0 +1,397 @@
+{
+  "summary": {
+    "n": 25,
+    "recall_at_k_mean": 1.0,
+    "mrr_mean": 1.0,
+    "intent_accuracy": 1.0,
+    "tool_accuracy": 1.0,
+    "factual_hit_rate": 1.0,
+    "latency_mean_s": 1.091,
+    "top_k": 5
+  },
+  "details": [
+    {
+      "id": "r1",
+      "category": "retrieval",
+      "question": "What paper discusses neutrino mixing angles and fixed points?",
+      "intent_pred": "semantic",
+      "latency_s": 26.5,
+      "retrieved_ids": [
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50b46e0fb0001b28942",
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f51546e0fb0001b28b37",
+        "5e70f50e46e0fb0001b289e0"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r2",
+      "category": "retrieval",
+      "question": "Vistula River floodplain near Plock hydrology GIS",
+      "intent_pred": "semantic",
+      "latency_s": 0.031,
+      "retrieved_ids": [
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f51346e0fb0001b28ae2",
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f50e46e0fb0001b289d5"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r3",
+      "category": "retrieval",
+      "question": "iron hexacyanoferrate immobilized in silica sol-gel voltammetry",
+      "intent_pred": "semantic",
+      "latency_s": 0.035,
+      "retrieved_ids": [
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f50e46e0fb0001b289d5",
+        "5e70f51746e0fb0001b28b7d",
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f50b46e0fb0001b28936"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r4",
+      "category": "retrieval",
+      "question": "mixed nickel palladium hexacyanoferrate electrodes",
+      "intent_pred": "semantic",
+      "latency_s": 0.027,
+      "retrieved_ids": [
+        "5e70f50e46e0fb0001b289d5",
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f50b46e0fb0001b28942",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50d46e0fb0001b2899e"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r5",
+      "category": "retrieval",
+      "question": "BPOF composite filter genetic algorithm optical correlators",
+      "intent_pred": "semantic",
+      "latency_s": 0.036,
+      "retrieved_ids": [
+        "5e70f50b46e0fb0001b28942",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50e46e0fb0001b289d5",
+        "5e70f50c46e0fb0001b28971",
+        "5e70f51346e0fb0001b28ae2"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r6",
+      "category": "retrieval",
+      "question": "parallel alternating direction access machine padam sorting",
+      "intent_pred": "semantic",
+      "latency_s": 0.032,
+      "retrieved_ids": [
+        "5e70f50c46e0fb0001b28971",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f51346e0fb0001b28ae2",
+        "5e70f50d46e0fb0001b2899e",
+        "5e70f50b46e0fb0001b28942"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r7",
+      "category": "retrieval",
+      "question": "Abelian integrals quadratic systems limit cycles",
+      "intent_pred": "semantic",
+      "latency_s": 0.03,
+      "retrieved_ids": [
+        "5e70f50d46e0fb0001b2899e",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50c46e0fb0001b28971"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r8",
+      "category": "retrieval",
+      "question": "nonlocal coagulation fragmentation model integro-differential",
+      "intent_pred": "semantic",
+      "latency_s": 0.032,
+      "retrieved_ids": [
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f51546e0fb0001b28b37",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50e46e0fb0001b289e0"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r9",
+      "category": "retrieval",
+      "question": "inequality measures equitable approaches location problems",
+      "intent_pred": "semantic",
+      "latency_s": 0.031,
+      "retrieved_ids": [
+        "5e70f51346e0fb0001b28ae2",
+        "5e70f51646e0fb0001b28b61",
+        "5e70f50c46e0fb0001b28971",
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50b46e0fb0001b28936"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r10",
+      "category": "retrieval",
+      "question": "free boundary problem incompressible viscous self-gravitating fluid",
+      "intent_pred": "semantic",
+      "latency_s": 0.034,
+      "retrieved_ids": [
+        "5e70f51446e0fb0001b28b28",
+        "5e70f51746e0fb0001b28b7d",
+        "5e70f51546e0fb0001b28b37",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50e46e0fb0001b289e0"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r11",
+      "category": "retrieval",
+      "question": "two sex population gestation period delay equations",
+      "intent_pred": "semantic",
+      "latency_s": 0.03,
+      "retrieved_ids": [
+        "5e70f51546e0fb0001b28b37",
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f51446e0fb0001b28b28",
+        "5e70f51046e0fb0001b28a37"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r12",
+      "category": "retrieval",
+      "question": "information complexity neural networks RBF",
+      "intent_pred": "semantic",
+      "latency_s": 0.029,
+      "retrieved_ids": [
+        "5e70f51646e0fb0001b28b61",
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50b46e0fb0001b28942",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50c46e0fb0001b28971"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "r13",
+      "category": "retrieval",
+      "question": "electrohydrodynamic convection rubrene luminescence patterns",
+      "intent_pred": "semantic",
+      "latency_s": 0.035,
+      "retrieved_ids": [
+        "5e70f51746e0fb0001b28b7d",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f50e46e0fb0001b289d5",
+        "5e70f50b46e0fb0001b28942"
+      ],
+      "recall_at_k": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "a1",
+      "category": "analytics",
+      "question": "Jakie są najpopularniejsze tematy?",
+      "intent_pred": "trend",
+      "latency_s": 0.043,
+      "retrieved_ids": [
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f50c46e0fb0001b28971",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f51346e0fb0001b28ae2"
+      ],
+      "intent_ok": true,
+      "tool_ok": true
+    },
+    {
+      "id": "a2",
+      "category": "analytics",
+      "question": "Top topics in the dataset",
+      "intent_pred": "trend",
+      "latency_s": 0.033,
+      "retrieved_ids": [
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f51446e0fb0001b28b28",
+        "5e70f51046e0fb0001b28a37",
+        "5e70f51746e0fb0001b28b7d",
+        "5e70f50b46e0fb0001b28936"
+      ],
+      "intent_ok": true,
+      "tool_ok": true
+    },
+    {
+      "id": "a3",
+      "category": "analytics",
+      "question": "Profil autora Paweł Kulesza",
+      "intent_pred": "author",
+      "latency_s": 0.038,
+      "retrieved_ids": [
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50e46e0fb0001b289d5",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f51346e0fb0001b28ae2"
+      ],
+      "intent_ok": true,
+      "tool_ok": true
+    },
+    {
+      "id": "a4",
+      "category": "analytics",
+      "question": "Współautorzy dla Paweł Kulesza",
+      "intent_pred": "coauthor",
+      "latency_s": 0.011,
+      "retrieved_ids": [],
+      "intent_ok": true,
+      "tool_ok": true
+    },
+    {
+      "id": "a5",
+      "category": "analytics",
+      "question": "Author profile Leszek Plaskota",
+      "intent_pred": "author",
+      "latency_s": 0.033,
+      "retrieved_ids": [
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50c46e0fb0001b28971",
+        "5e70f50e46e0fb0001b289d5",
+        "5e70f51446e0fb0001b28b28"
+      ],
+      "intent_ok": true,
+      "tool_ok": true
+    },
+    {
+      "id": "a6",
+      "category": "analytics",
+      "question": "Trend dla neural network",
+      "intent_pred": "trend",
+      "latency_s": 0.03,
+      "retrieved_ids": [
+        "5e70f51646e0fb0001b28b61",
+        "5e70f51046e0fb0001b28a37",
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50c46e0fb0001b28971",
+        "5e70f51346e0fb0001b28ad6"
+      ],
+      "intent_ok": true,
+      "tool_ok": true
+    },
+    {
+      "id": "a7",
+      "category": "analytics",
+      "question": "Co-authors of Krzysztof Miecznikowski",
+      "intent_pred": "coauthor",
+      "latency_s": 0.009,
+      "retrieved_ids": [],
+      "intent_ok": true,
+      "tool_ok": true
+    },
+    {
+      "id": "f1",
+      "category": "factual",
+      "question": "Who co-authored the neutrino mixing fixed points paper?",
+      "intent_pred": "semantic",
+      "latency_s": 0.03,
+      "retrieved_ids": [
+        "5e70f50b46e0fb0001b28936",
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f50b46e0fb0001b28942",
+        "5e70f50c46e0fb0001b28971"
+      ],
+      "factual_ok": true
+    },
+    {
+      "id": "f2",
+      "category": "factual",
+      "question": "In which year was the Vistula floodplain paper published?",
+      "intent_pred": "semantic",
+      "latency_s": 0.031,
+      "retrieved_ids": [
+        "5e70f51046e0fb0001b28a37",
+        "5e70f51746e0fb0001b28b7d",
+        "5e70f51346e0fb0001b28ae2",
+        "5e70f51546e0fb0001b28b37",
+        "5e70f50e46e0fb0001b289e0"
+      ],
+      "factual_ok": true
+    },
+    {
+      "id": "f3",
+      "category": "factual",
+      "question": "What methods were used in the Vistula River floodplain study?",
+      "intent_pred": "semantic",
+      "latency_s": 0.042,
+      "retrieved_ids": [
+        "5e70f51046e0fb0001b28a37",
+        "5e70f51446e0fb0001b28b28",
+        "5e70f50e46e0fb0001b289d5",
+        "5e70f51746e0fb0001b28b7d",
+        "5e70f51346e0fb0001b28ad6"
+      ],
+      "factual_ok": true
+    },
+    {
+      "id": "c1",
+      "category": "classification",
+      "question": "List topic clusters present in the database",
+      "intent_pred": "trend",
+      "latency_s": 0.043,
+      "retrieved_ids": [
+        "5e70f51346e0fb0001b28ad6",
+        "5e70f51746e0fb0001b28b7d",
+        "5e70f50c46e0fb0001b28971",
+        "5e70f51346e0fb0001b28ae2",
+        "5e70f51446e0fb0001b28b28"
+      ],
+      "intent_ok": true
+    },
+    {
+      "id": "c2",
+      "category": "classification",
+      "question": "Jakie tematy dominują w publikacjach?",
+      "intent_pred": "trend",
+      "latency_s": 0.04,
+      "retrieved_ids": [
+        "5e70f51046e0fb0001b28a37",
+        "5e70f51446e0fb0001b28b28",
+        "5e70f50e46e0fb0001b289e0",
+        "5e70f50c46e0fb0001b28971",
+        "5e70f51346e0fb0001b28ae2"
+      ],
+      "intent_ok": true
+    }
+  ]
+}

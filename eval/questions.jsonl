@@ -1,0 +1,25 @@
+{"id": "r1", "category": "retrieval", "question": "What paper discusses neutrino mixing angles and fixed points?", "relevant_ids": ["5e70f50b46e0fb0001b28936"]}
+{"id": "r2", "category": "retrieval", "question": "Vistula River floodplain near Plock hydrology GIS", "relevant_ids": ["5e70f51046e0fb0001b28a37"]}
+{"id": "r3", "category": "retrieval", "question": "iron hexacyanoferrate immobilized in silica sol-gel voltammetry", "relevant_ids": ["5e70f50e46e0fb0001b289e0"]}
+{"id": "r4", "category": "retrieval", "question": "mixed nickel palladium hexacyanoferrate electrodes", "relevant_ids": ["5e70f50e46e0fb0001b289d5"]}
+{"id": "r5", "category": "retrieval", "question": "BPOF composite filter genetic algorithm optical correlators", "relevant_ids": ["5e70f50b46e0fb0001b28942"]}
+{"id": "r6", "category": "retrieval", "question": "parallel alternating direction access machine padam sorting", "relevant_ids": ["5e70f50c46e0fb0001b28971"]}
+{"id": "r7", "category": "retrieval", "question": "Abelian integrals quadratic systems limit cycles", "relevant_ids": ["5e70f50d46e0fb0001b2899e"]}
+{"id": "r8", "category": "retrieval", "question": "nonlocal coagulation fragmentation model integro-differential", "relevant_ids": ["5e70f51346e0fb0001b28ad6"]}
+{"id": "r9", "category": "retrieval", "question": "inequality measures equitable approaches location problems", "relevant_ids": ["5e70f51346e0fb0001b28ae2"]}
+{"id": "r10", "category": "retrieval", "question": "free boundary problem incompressible viscous self-gravitating fluid", "relevant_ids": ["5e70f51446e0fb0001b28b28"]}
+{"id": "r11", "category": "retrieval", "question": "two sex population gestation period delay equations", "relevant_ids": ["5e70f51546e0fb0001b28b37"]}
+{"id": "r12", "category": "retrieval", "question": "information complexity neural networks RBF", "relevant_ids": ["5e70f51646e0fb0001b28b61"]}
+{"id": "r13", "category": "retrieval", "question": "electrohydrodynamic convection rubrene luminescence patterns", "relevant_ids": ["5e70f51746e0fb0001b28b7d"]}
+{"id": "a1", "category": "analytics", "question": "Jakie są najpopularniejsze tematy?", "expect_intent": "trend", "expect_tool": "top_topics"}
+{"id": "a2", "category": "analytics", "question": "Top topics in the dataset", "expect_intent": "trend", "expect_tool": "top_topics"}
+{"id": "a3", "category": "analytics", "question": "Profil autora Paweł Kulesza", "expect_intent": "author", "expect_tool": "author_profile", "expect_author_substring": "Kulesza"}
+{"id": "a4", "category": "analytics", "question": "Współautorzy dla Paweł Kulesza", "expect_intent": "coauthor", "expect_tool": "coauthor_graph"}
+{"id": "a5", "category": "analytics", "question": "Author profile Leszek Plaskota", "expect_intent": "author", "expect_tool": "author_profile", "expect_author_substring": "Plaskota"}
+{"id": "a6", "category": "analytics", "question": "Trend dla neural network", "expect_intent": "trend", "expect_tool": "topic_trend"}
+{"id": "a7", "category": "analytics", "question": "Co-authors of Krzysztof Miecznikowski", "expect_intent": "coauthor", "expect_tool": "coauthor_graph"}
+{"id": "f1", "category": "factual", "question": "Who co-authored the neutrino mixing fixed points paper?", "relevant_ids": ["5e70f50b46e0fb0001b28936"], "must_contain_any": ["Chankowski", "Pokorski", "Królikowski", "Krolikowski"]}
+{"id": "f2", "category": "factual", "question": "In which year was the Vistula floodplain paper published?", "relevant_ids": ["5e70f51046e0fb0001b28a37"], "must_contain_any": ["2000"]}
+{"id": "f3", "category": "factual", "question": "What methods were used in the Vistula River floodplain study?", "relevant_ids": ["5e70f51046e0fb0001b28a37"], "must_contain_any": ["GIS", "DTM", "floodplain"]}
+{"id": "c1", "category": "classification", "question": "List topic clusters present in the database", "expect_intent": "trend"}
+{"id": "c2", "category": "classification", "question": "Jakie tematy dominują w publikacjach?", "expect_intent": "trend"}

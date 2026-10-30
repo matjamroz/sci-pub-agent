@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sci-pub-agent"
+version = "0.1.0"
+description = "RAG agent for trends and dependencies in scientific publications"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "streamlit>=1.40.0",
+  "pydantic>=2.9.0",
+  "pydantic-settings>=2.6.0",
+  "python-dotenv>=1.0.1",
+  "chromadb>=0.5.23",
+  "sentence-transformers>=3.3.0",
+  "scikit-learn>=1.5.0",
+  "numpy>=1.26.0",
+  "httpx>=0.27.0",
+  "plotly>=5.24.0",
+  "rank-bm25>=0.2.2",
+  "openai>=1.55.0",
+  "tqdm>=4.66.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
