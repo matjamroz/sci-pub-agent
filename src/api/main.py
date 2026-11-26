@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
+import queue
+import threading
 from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from src.config import get_settings
@@ -15,13 +19,38 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
+def _warm_search() -> None:
+    """Load the vector model before the first question, so that question is not the one that pays for it."""
+    try:
+        rt = runtime()
+        from src.embeddings import embed_texts
+
+        embed_texts(["warmup"])
+        # Load the language model at the context size used for answers,
+        # so the first question is not the one that reloads it.
+        rt.agent.llm.chat(
+            [{"role": "user", "content": "ok"}],
+            max_tokens=1,
+        )
+    except Exception:
+        return
+
+
+@app.on_event("startup")
+def warm_search_on_startup() -> None:
+    threading.Thread(target=_warm_search, daemon=True).start()
+
 _runtime = None
+_runtime_lock = threading.Lock()
 
 
 def runtime():
     global _runtime
     if _runtime is None:
-        _runtime = get_runtime()
+        with _runtime_lock:
+            if _runtime is None:
+                _runtime = get_runtime()
     return _runtime
 
 
@@ -45,21 +74,70 @@ def health() -> dict[str, Any]:
         rt = runtime()
         n = rt.store.count_publications()
         span = rt.store.year_span()
+        trend_span = rt.store.trend_year_span()
+        directions = rt.store.count_directions()
     except Exception as exc:
         return {"status": "degraded", "error": str(exc)}
     return {
         "status": "ok",
         "publications": n,
         "year_span": span,
+        "trend_year_span": trend_span,
+        "directions": directions,
         "llm_model": settings.llm_model,
         "embedding_model": settings.embedding_model,
     }
 
 
+@app.post("/ask/stream")
+def ask_stream(req: AskRequest):
+    def generate():
+        box: dict[str, Any] = {}
+        tokens: queue.Queue = queue.Queue()
+
+        def worker() -> None:
+            try:
+                box["result"] = runtime().agent.ask(
+                    req.question,
+                    top_k=req.top_k,
+                    year=req.year,
+                    history=req.history,
+                    on_token=tokens.put,
+                )
+            except Exception as exc:
+                box["error"] = str(exc)
+            tokens.put(None)
+
+        threading.Thread(target=worker, daemon=True).start()
+        while True:
+            item = tokens.get()
+            if item is None:
+                break
+            yield json.dumps({"type": "token", "text": item}, ensure_ascii=False) + "\n"
+        if box.get("error"):
+            yield json.dumps(
+                {"type": "error", "text": box["error"]}, ensure_ascii=False
+            ) + "\n"
+            return
+        result = box["result"]
+        yield json.dumps(
+            {
+                "type": "done",
+                "answer": result.answer,
+                "intent": result.intent,
+                "sources": result.sources,
+                "tool_results": result.tool_results,
+                "chart": result.chart,
+                "rewritten_query": result.rewritten_query,
+            },
+            ensure_ascii=False,
+        ) + "\n"
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
+
+
 @app.post("/ask")
 def ask(req: AskRequest) -> dict[str, Any]:
-    if not req.question.strip():
-        raise HTTPException(status_code=400, detail="question is required")
     rt = runtime()
     result = rt.agent.ask(
         req.question,
@@ -73,6 +151,7 @@ def ask(req: AskRequest) -> dict[str, Any]:
         "sources": result.sources,
         "tool_results": result.tool_results,
         "chart": result.chart,
+        "rewritten_query": result.rewritten_query,
     }
 
 

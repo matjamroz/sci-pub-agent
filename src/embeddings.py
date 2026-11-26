@@ -15,7 +15,10 @@ from src.config import get_settings
 def get_embedder(model_name: Optional[str] = None) -> SentenceTransformer:
     settings = get_settings()
     name = model_name or settings.embedding_model
-    return SentenceTransformer(name)
+    model = SentenceTransformer(name)
+    if "bge-m3" in name:
+        model.max_seq_length = 8192
+    return model
 
 
 def embed_texts(texts: list[str], model_name: Optional[str] = None) -> np.ndarray:

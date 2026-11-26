@@ -10,7 +10,8 @@ from src.retrieve.index import VectorIndex
 
 
 def _tokenize(text: str) -> list[str]:
-    return re.findall(r"[a-z0-9α-ω]+", text.lower())
+    # Include Latin letters with diacritics (PL) and Greek letters from abstracts.
+    return re.findall(r"[a-z0-9α-ωà-öø-ÿąćęłńóśźż]+", text.lower(), flags=re.IGNORECASE)
 
 
 class HybridRetriever:

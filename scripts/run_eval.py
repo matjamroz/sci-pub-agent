@@ -12,21 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.agent.orchestrator import classify_intent
 from src.pipeline import get_runtime
-
-
-def recall_at_k(retrieved_ids: list[str], relevant: list[str], k: int) -> float:
-    if not relevant:
-        return 0.0
-    top = set(retrieved_ids[:k])
-    return len(top & set(relevant)) / len(relevant)
-
-
-def mrr(retrieved_ids: list[str], relevant: list[str]) -> float:
-    rel = set(relevant)
-    for i, doc_id in enumerate(retrieved_ids, start=1):
-        if doc_id in rel:
-            return 1.0 / i
-    return 0.0
+from src.retrieve.ranking import mrr, ndcg_at_k, recall_at_k
 
 
 def main() -> None:
@@ -36,7 +22,7 @@ def main() -> None:
         type=Path,
         default=ROOT / "eval" / "questions.jsonl",
     )
-    parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument("--top-k", type=int, default=10)
     parser.add_argument("--out", type=Path, default=ROOT / "eval" / "results.json")
     args = parser.parse_args()
 
@@ -49,6 +35,8 @@ def main() -> None:
                 rows.append(json.loads(line))
 
     retrieval_scores = []
+    recall10_scores = []
+    ndcg10_scores = []
     mrr_scores = []
     intent_ok = 0
     intent_n = 0
@@ -82,11 +70,25 @@ def main() -> None:
         }
 
         if row.get("category") == "retrieval" and row.get("relevant_ids"):
+            ids_at_10 = retrieved_ids
+            if len(retrieved_ids) < 10:
+                extra = rt.retriever.search(q, top_k=10)
+                ids_at_10 = []
+                for hit in extra:
+                    oid = (hit.get("metadata") or {}).get("object_id")
+                    if oid and oid not in ids_at_10:
+                        ids_at_10.append(oid)
             r = recall_at_k(retrieved_ids, row["relevant_ids"], args.top_k)
+            r10 = recall_at_k(ids_at_10, row["relevant_ids"], 10)
+            n10 = ndcg_at_k(ids_at_10, row["relevant_ids"], 10)
             m = mrr(retrieved_ids, row["relevant_ids"])
             retrieval_scores.append(r)
+            recall10_scores.append(r10)
+            ndcg10_scores.append(n10)
             mrr_scores.append(m)
             item["recall_at_k"] = r
+            item["recall_at_10"] = r10
+            item["ndcg_at_10"] = n10
             item["mrr"] = m
 
         if row.get("expect_intent"):
@@ -121,6 +123,12 @@ def main() -> None:
         "n": len(rows),
         "recall_at_k_mean": round(sum(retrieval_scores) / len(retrieval_scores), 4)
         if retrieval_scores
+        else None,
+        "recall_at_10_mean": round(sum(recall10_scores) / len(recall10_scores), 4)
+        if recall10_scores
+        else None,
+        "ndcg_at_10_mean": round(sum(ndcg10_scores) / len(ndcg10_scores), 4)
+        if ndcg10_scores
         else None,
         "mrr_mean": round(sum(mrr_scores) / len(mrr_scores), 4) if mrr_scores else None,
         "intent_accuracy": round(intent_ok / intent_n, 4) if intent_n else None,

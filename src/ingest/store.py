@@ -58,7 +58,13 @@ class MetadataStore:
         self._conn = sqlite3.connect(str(self.path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(SCHEMA_SQL)
+        self._ensure_search_text_column()
         self._conn.commit()
+
+    def _ensure_search_text_column(self) -> None:
+        columns = {row[1] for row in self._conn.execute("PRAGMA table_info(publications)")}
+        if "search_text" not in columns:
+            self._conn.execute("ALTER TABLE publications ADD COLUMN search_text TEXT")
 
     def close(self) -> None:
         self._conn.close()
@@ -80,8 +86,10 @@ class MetadataStore:
             keywords = " | ".join(pub.keyword_list())
             self._conn.execute(
                 """
-                INSERT INTO publications(object_id, title, year, doi, abstract, keywords, topic_id, topic_label)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO publications(
+                    object_id, title, year, doi, abstract, keywords, topic_id, topic_label, search_text
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(object_id) DO UPDATE SET
                     title=excluded.title,
                     year=excluded.year,
@@ -89,7 +97,8 @@ class MetadataStore:
                     abstract=excluded.abstract,
                     keywords=excluded.keywords,
                     topic_id=excluded.topic_id,
-                    topic_label=excluded.topic_label
+                    topic_label=excluded.topic_label,
+                    search_text=excluded.search_text
                 """,
                 (
                     pub.object_id,
@@ -100,10 +109,15 @@ class MetadataStore:
                     keywords,
                     pub.topic_id,
                     pub.topic_label,
+                    pub.publication_search_text(),
                 ),
             )
             self._conn.execute("DELETE FROM authorships WHERE object_id = ?", (pub.object_id,))
+            seen_authors: set[str] = set()
             for pos, author in enumerate(pub.authors):
+                if author.author_key in seen_authors:
+                    continue
+                seen_authors.add(author.author_key)
                 self._conn.execute(
                     """
                     INSERT INTO authors(author_key, name, last_name, orcid_id, uuid, object_id)
@@ -159,24 +173,57 @@ class MetadataStore:
         ).fetchone()
         return row["mn"], row["mx"]
 
+    def count_directions(self) -> int:
+        row = self._conn.execute(
+            """
+            SELECT COUNT(DISTINCT topic_id) AS c
+            FROM publications
+            WHERE topic_id IS NOT NULL
+            """
+        ).fetchone()
+        return int(row["c"])
+
+    def trend_year_span(
+        self, year_min: int = 1900, year_max: int = 2026
+    ) -> tuple[Optional[int], Optional[int]]:
+        row = self._conn.execute(
+            """
+            SELECT MIN(year) AS mn, MAX(year) AS mx
+            FROM publications
+            WHERE year >= ? AND year <= ?
+            """,
+            (year_min, year_max),
+        ).fetchone()
+        return row["mn"], row["mx"]
+
     def fetch_publication(self, object_id: str) -> Optional[sqlite3.Row]:
         return self._conn.execute(
             "SELECT * FROM publications WHERE object_id = ?", (object_id,)
         ).fetchone()
 
     def search_authors(self, query: str, limit: int = 10) -> list[sqlite3.Row]:
-        q = f"%{query.strip()}%"
-        return list(
-            self._conn.execute(
-                """
-                SELECT * FROM authors
-                WHERE name LIKE ? OR last_name LIKE ? OR (name || ' ' || last_name) LIKE ?
-                   OR (last_name || ' ' || name) LIKE ?
-                LIMIT ?
-                """,
-                (q, q, q, q, limit),
-            )
-        )
+        import unicodedata
+
+        def fold(s: str) -> str:
+            s = unicodedata.normalize("NFKD", s or "")
+            return "".join(c for c in s if not unicodedata.combining(c)).lower()
+
+        needle = fold(query.strip())
+        if not needle:
+            return []
+        rows = list(self._conn.execute("SELECT * FROM authors"))
+        scored: list[tuple[int, sqlite3.Row]] = []
+        for row in rows:
+            full = fold(f"{row['name']} {row['last_name']}")
+            rev = fold(f"{row['last_name']} {row['name']}")
+            last = fold(row["last_name"] or "")
+            first = fold(row["name"] or "")
+            if needle in full or needle in rev or needle in last or needle in first:
+                # Prefer last-name hits
+                score = 0 if needle == last or needle in last else 1
+                scored.append((score, row))
+        scored.sort(key=lambda x: (x[0], fold(x[1]["last_name"] or "")))
+        return [r for _, r in scored[:limit]]
 
     def connection(self) -> sqlite3.Connection:
         return self._conn

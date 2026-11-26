@@ -7,7 +7,7 @@ Temat dyplomu: *An Agent for Answering Questions on Trends and Dependencies in S
 ## Wymagania
 
 - Python 3.11+
-- (opcjonalnie) [Ollama](https://ollama.com) z modelem `llama3.1` — bez LLM działa fallback deterministyczny
+- (opcjonalnie) [Ollama](https://ollama.com) z modelem `llama3.2:3b` — bez LLM działa fallback deterministyczny
 
 ## Szybki start (Windows)
 

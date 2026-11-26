@@ -69,7 +69,32 @@ class Publication(BaseModel):
                 return list(ks.keywords)
         return []
 
+    def publication_search_text(self, max_chars: int = 3200) -> str:
+        """Text that was embedded: title, every abstract, every keyword string.
+
+        The Kaggle run stored one vector per publication and cut the text at
+        3200 characters. Keep the same cut so the stored passage matches the vector.
+        """
+        parts: list[str] = []
+        title = " ".join((self.title or "").split())
+        if title:
+            parts.append(title)
+        for abstract in self.abstracts:
+            content = " ".join(abstract.content.split())
+            if content:
+                parts.append(content)
+        keywords: list[str] = []
+        for group in self.keywords:
+            for keyword in group.keywords:
+                cleaned = " ".join(keyword.split())
+                if cleaned:
+                    keywords.append(cleaned)
+        if keywords:
+            parts.append(" ".join(keywords))
+        text = "\n\n".join(parts)
+        if max_chars and len(text) > max_chars:
+            return text[:max_chars]
+        return text
+
     def searchable_text(self) -> str:
-        kws = " ".join(self.keyword_list())
-        parts = [self.title or "", self.primary_abstract(), kws]
-        return "\n\n".join(p for p in parts if p).strip()
+        return self.publication_search_text(max_chars=0)

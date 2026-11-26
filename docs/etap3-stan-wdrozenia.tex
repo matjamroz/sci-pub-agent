@@ -1,0 +1,309 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{times.ttf}[
+  Path = {C:/Windows/Fonts/},
+  BoldFont = timesbd.ttf,
+  ItalicFont = timesi.ttf,
+  BoldItalicFont = timesbi.ttf
+]
+\setmonofont{cour.ttf}[
+  Path = {C:/Windows/Fonts/},
+  BoldFont = courbd.ttf,
+  ItalicFont = couri.ttf,
+  BoldItalicFont = courbi.ttf
+]
+\usepackage[polish]{babel}
+\usepackage{geometry}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{ragged2e}
+
+\geometry{a4paper, margin=2.3cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\linespread{1.05}
+\pagestyle{plain}
+
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Agent do odpowiadania na pytania dotyczące trendów i~zależności w~publikacjach naukowych\par}
+\vspace{0.7em}
+Autorzy: Mateusz Jamroż, Szymon Kiełtyka\par
+\vspace{0.25em}
+Etap 3. Stan wdrożenia modułów. Spotkanie 19.11.2026.
+\end{center}
+
+\vspace{0.4em}
+
+\section*{Stan wdrożenia}
+
+W~tym etapie złożyliśmy moduły, które w~pierwszym dokumencie były jeszcze tylko opisane. Aplikacja działa na komputerze autorów. Użytkownik rozmawia w~oknie, a~przygotowanie zbioru jest osobną pracą: wczytujemy plik, liczymy wektory, przypisujemy kierunki i~składamy bazę wektorową. Pytanie zadane w~oknie nie przelicza wektorów od nowa.
+
+Mamy 621\,515 publikacji w~jednym pliku JSONL o~rozmiarze 1\,979\,261\,045 bajtów. Z~rekordu bierzemy identyfikator, tytuł, rok, DOI, abstrakty, słowa kluczowe i~autorów. Metadane trzymamy w~SQLite, wektory w~Chromie. Na każdą publikację przypada jeden wektor i~przy liczeniu nie wypadł żaden rekord.
+
+Autorów łączymy po ORCID. Gdy go nie ma, bierzemy uuid, a~na końcu identyfikator autora z~rekordu. Jeśli ten sam klucz pojawi się dwa razy przy jednej pracy, zostawiamy pierwsze wystąpienie. Dwie osoby o~tym samym imieniu i~nazwisku, ale z~innym identyfikatorem, zostają osobno. W~profilu widać, która z~nich została dopasowana, razem z~jej pracami.
+
+\section*{Liczenie wektorów}
+
+Cały zbiór wektoryzowaliśmy raz, na Kaggle, na dwóch kartach NVIDIA Tesla T4 po 16\,GB pamięci. Kaggle był potrzebny tylko do tego zadania. Pliki ściągnęliśmy do siebie i~od tego momentu rozmowa działa lokalnie, bez wchodzenia na Kaggle.
+
+Użyliśmy modelu BAAI/bge-m3 z~biblioteki sentence-transformers. Chodziło o~to, żeby polskie pytanie dało się zestawić z~angielskim abstraktem. Model zna oba języki, przyjmuje do 8192 tokenów i~oddaje wektor o~1024 wymiarach. Limit tokenów ustawiliśmy ręcznie, bo bez tego biblioteka potrafi uciąć tekst dużo wcześniej.
+
+Przy pełnym zbiorze odpadły pozostałe modele, które rozważaliśmy wcześniej. multilingual-e5-large dobrze radzi sobie z~krótkim tekstem polskim, ale przy 512 tokenach uciąłby przygotowany opis publikacji. multilingual-e5-base ma ten sam limit. all-mpnet-base-v2 i~all-MiniLM-L6-v2 są nastawione głównie na angielski. W~plikach wektorów i~przy późniejszym pytaniu jest więc BAAI/bge-m3.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|L{0.38\textwidth}|Y|}
+\hline
+\textbf{Model} & \textbf{Użycie przy pełnym zbiorze} \\
+\hline
+BAAI/bge-m3 & użyty na Kaggle i~przy pytaniu; 1024 wymiary, do 8192 tokenów \\
+\hline
+multilingual-e5-large & odrzucony: limit 512 tokenów ucina tekst publikacji \\
+\hline
+multilingual-e5-base & odrzucony: ten sam limit \\
+\hline
+all-mpnet-base-v2 & odrzucony: model głównie angielski \\
+\hline
+all-MiniLM-L6-v2 & odrzucony: model głównie angielski \\
+\hline
+\end{tabularx}
+\end{center}
+
+Do modelu idzie jeden tekst na publikację: tytuł, wszystkie abstrakty, które są w~rekordzie, i~wszystkie słowa kluczowe. Ściągamy zbędne spacje i~ucinamy całość na 3200 znakach. Pracy nie tniemy na kawałki. Wektory normalizujemy, a~w~bazie porównujemy je kosinusem. Nie dokładamy przedrostków w~rodzaju \emph{query} ani \emph{passage}.
+
+Na kartach liczyliśmy w~float16, żeby partia zmieściła się w~pamięci T4, a~na dysk zapisaliśmy float32. Partia miała 16 tekstów na kartę i~szły obie karty naraz. Pytanie użytkownika kodujemy później tym samym modelem, już u~nas, i~też powstaje z~niego jeden wektor.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|L{0.36\textwidth}|Y|}
+\hline
+\textbf{Parametr} & \textbf{Wartość} \\
+\hline
+Miejsce obliczenia & Kaggle, dwie karty NVIDIA Tesla T4, po 16\,GB \\
+\hline
+Model & BAAI/bge-m3, sentence-transformers \\
+\hline
+Wymiar wektora & 1024 \\
+\hline
+Porównanie & kosinus, wektory znormalizowane \\
+\hline
+Długość kontekstu & 8192 tokenów \\
+\hline
+Tekst jednej publikacji & tytuł, abstrakty i~słowa kluczowe, do 3200 znaków \\
+\hline
+Wektorów na publikację & 1 \\
+\hline
+Liczenie / zapis & float16 / float32 \\
+\hline
+Partia na kartę & 16, obie karty \\
+\hline
+Rekordy & 621\,515, żaden niepominięty \\
+\hline
+Czas & 6514 sekund, około godziny i~49 minut \\
+\hline
+Pliki & 63 pary \texttt{vectors} i~\texttt{ids}; ostatni plik ma 1515 wierszy \\
+\hline
+\end{tabularx}
+\end{center}
+
+Wyszło 63 pary plików, od \texttt{vectors\_00000.npy} do \texttt{vectors\_00062.npy}, i~tyle samo list identyfikatorów. W~pełnym pliku jest 10\,000 wierszy, w~ostatnim 1515. Identyfikator w~pliku tekstowym stoi w~tej samej kolejności co wiersz wektora. Obok leży \texttt{metadata.json} z~nazwą modelu, wymiarem, normalizacją, sposobem porównania, typem liczb, kartami, wielkością partii, limitami, liczbą rekordów i~czasem.
+
+Potem, już na naszym komputerze, wczytaliśmy JSONL do SQLite, na gotowych wektorach przypisaliśmy grupy i~te wektory wstawiliśmy do Chromy. Przy wstawianiu model nie liczył ich drugi raz.
+
+W~kolekcji \texttt{publications} przy wektorze zapisujemy identyfikator publikacji, tytuł, rok, DOI, numer i~nazwę grupy oraz autorów. Identyfikator fragmentu kończy się na \texttt{::0}, bo wektor jest jeden. Ten sam tekst służy później wyszukiwaniu słownemu. Aplikację odpalamy lokalnie: API na porcie 8000 i~okno Streamlit. Przy pierwszym uruchomieniu dociągane są wagi BAAI/bge-m3, jeżeli nie ma ich jeszcze na dysku.
+
+\section*{Klasyfikacja kierunków}
+
+Gotowej nazwy dziedziny w~danych nie ma, więc kierunek rozumiemy jako grupę publikacji o~podobnych wektorach. Na pełnym zbiorze użyliśmy MiniBatchKMeans. Ustawienia, z~którymi ten podział wszedł do bazy, są poniżej.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|L{0.36\textwidth}|Y|}
+\hline
+\textbf{Parametr} & \textbf{Wartość} \\
+\hline
+Metoda & MiniBatchKMeans \\
+\hline
+Liczba grup & 6 \\
+\hline
+Ziarno & 42 \\
+\hline
+Wielkość partii & 4096 \\
+\hline
+Powtórzenia startu & 3 \\
+\hline
+Dane & zapisane wektory BAAI/bge-m3 \\
+\hline
+Nazwa grupy & trzy najczęstsze słowa kluczowe \\
+\hline
+\end{tabularx}
+\end{center}
+
+Nazwa jest pomocnicza: bierzemy trzy słowa kluczowe, które w~danej grupie pojawiają się najczęściej, i~składamy z~nich etykietę. Pytania o~kierunki korzystają właśnie z~tego podziału.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|c|Y|r|}
+\hline
+\textbf{Grupa} & \textbf{Nazwa ze słów kluczowych} & \textbf{Publikacje} \\
+\hline
+0 & the / Poland / education & 131\,609 \\
+\hline
+1 & Energy / Biofield / Trivedi & 79\,209 \\
+\hline
+2 & Poland / the / sustainable development & 149\,497 \\
+\hline
+3 & mechanical properties / microstructure / and & 88\,590 \\
+\hline
+4 & Poland / COVID-19 / children & 77\,492 \\
+\hline
+5 & machine learning / and / the & 95\,118 \\
+\hline
+\end{tabularx}
+\end{center}
+
+Suma liczebności wynosi 621\,515. Czy ten podział dobrze oddaje kierunki, sprawdzimy w~następnym kroku. Sposób sprawdzenia dopiero ustalamy. Jeśli trzeba będzie zmienić liczbę grup albo regułę nazywania, policzymy to z~tych samych wektorów, bez drugiej sesji na Kaggle, i~podmienimy kierunki w~SQLite oraz w~Chromie.
+
+W~kodzie jest też drugi model, TF-IDF z~regresją logistyczną. Miałby odtwarzać etykietę złożoną z~pierwszych słów pierwszego słowa kluczowego tej samej pracy. Na pełnych 621\,515 rekordach go nie uczyliśmy, bo w~zbiorze nie ma oficjalnych nazw dziedzin. Odpowiedzi o~kierunkach biorą się z~grup na wektorach, nie z~tego klasyfikatora.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|L{0.36\textwidth}|Y|}
+\hline
+\textbf{Parametr} & \textbf{Wartość} \\
+\hline
+Cechy & TF-IDF, do 5000 cech, pojedyncze słowa i~pary \\
+\hline
+Klasyfikator & regresja logistyczna \\
+\hline
+Liczba przejść & 1000 \\
+\hline
+Wagi klas & wyrównane \\
+\hline
+Część testowa w~kodzie & 30 procent \\
+\hline
+Ziarno podziału & 42 \\
+\hline
+Pełny zbiór & nieuczony \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section*{Wyszukiwanie, zestawienia i~odpowiedź}
+
+Pytanie o~treść zamieniamy na wektor modelem BAAI/bge-m3 i~szukamy najbliższych publikacji. Obok działa wyszukiwanie słowne BM25, które lepiej trzyma dokładny tytuł, nazwisko i~rzadki termin. Oba wyniki łączymy metodą RRF, bez porównywania punktacji z~dwóch różnych skal. Domyślnie zwracamy 10 publikacji. W~oknie tę liczbę można ustawić od 1 do 15 i~dodać filtr roku. Pod odpowiedzią podajemy tytuł, rok i~DOI, jeśli jest w~rekordzie.
+
+Liczebności liczymy w~SQLite, bo sam wektor nie powie, ile prac z~danego kierunku wypadło w~kolejnych latach. Do trendu bierzemy lata z~zakresu 1900--2026. Rok spoza tego zakresu zostaje w~bazie, ale nie wchodzi do szeregu. Wzorzec rozwoju porównuje pierwszy i~ostatni punkt: zmiana powyżej 10\% to wzrost, spadek o~więcej niż 10\% to spadek, a~pomiędzy tym poziom zostaje podobny. Gdy w~szeregu jest tylko jeden rok, podajemy liczebność za ten rok i~nie nazywamy tego wieloletnim trendem. Osobno aplikacja pokazuje najliczniejsze kierunki, profil autora, współautorów i~autorów danego kierunku. Jak osoby nie ma w~zbiorze, mówimy o~tym wprost.
+
+Zdanie układa lokalny model llama3.2:3b, uruchomiony na tym samym komputerze. Dostaje już policzone wiersze i~znalezione publikacje, więc nie wymyśla tytułów, lat ani osób. Odpowiedź jest w~języku pytania. Gdy model nie odpowie, zdanie składamy wprost z~tych samych wyników.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|L{0.36\textwidth}|Y|}
+\hline
+\textbf{Parametr} & \textbf{Wartość} \\
+\hline
+Model & llama3.2:3b \\
+\hline
+Dostęp & lokalne API na komputerze autorów \\
+\hline
+Temperatura & 0,2 \\
+\hline
+Kontekst & 2048 tokenów \\
+\hline
+Długość odpowiedzi & do 512 tokenów \\
+\hline
+Czas oczekiwania & 90 sekund \\
+\hline
+Gdy model nie odpowie & zdanie z~wyników wyszukiwania i~zestawień \\
+\hline
+\end{tabularx}
+\end{center}
+
+Użytkownik może mieć kilka czatów i~wracać do każdego z~nich. Przy nowym czacie zaznacza, czy ma on dostać historię innego czatu. Dopytanie w~stylu „a kto to napisał” opiera się na pracy albo osobie z~tej historii. Jak nie da się jej rozstrzygnąć, prosimy o~doprecyzowanie. Pusta wypowiedź, powitanie i~pytanie spoza publikacji nie ruszają bazy. Przy liczebności kierunków i~szeregu lat w~oknie jest też wykres.
+
+Kod sprawdzamy lokalnie, bez kontenerów. Testy obejmują klucz autora, złożenie tekstu z~polskiego i~angielskiego abstraktu, rozpoznanie rodzaju pytania, opis wzrostu i~spadku oraz odcięcie lat 1900--2026. Mamy też plik z~pytaniami na małym zbiorze próbnym. Ocenę wyszukiwania na pełnym indeksie i~ocenę podziału na grupy zostawiamy na później, bo sposób tej drugiej dopiero ustalamy.
+
+\section*{Co jeszcze dodajemy}
+
+Wektory BAAI/bge-m3 z~Kaggle zostają. Nie liczymy ich drugi raz. Zostały rzeczy, które były w~planie i~których jeszcze nie domknęliśmy.
+
+Najpierw chcemy ustalić, jak w~ogóle poznamy, że podział na grupy jest sensowny. Dopiero wtedy zdecydujemy, czy zostaje sześć grup i~obecne nazwy, czy zmieniamy liczbę grup albo sposób układania nazwy ze słów kluczowych.
+
+Do pełnego zbioru przygotujemy pytania po polsku i~po angielsku, z~wskazanymi publikacjami, które powinny się pojawić. Porównamy samo wyszukiwanie słowne, samo wyszukiwanie wektorem BAAI/bge-m3 i~połączenie, które jest już w~aplikacji. Osobno wejdą pytania polskie do angielskiego abstraktu, bo pod ten przypadek braliśmy ten model.
+
+Liczby z~odpowiedzi zestawimy z~zapytaniem puszczonym wprost na danych: liczba prac w~kierunku, ranking kierunków i~lata w~szeregu. Do układania zdań podłączony jest teraz llama3.2:3b. Na tych samych pytaniach porównamy go z~Qwen3 4B i~Qwen3 8B i~zostawimy najmniejszy model, który trzyma się przekazanych rekordów i~da się go normalnie używać u~nas.
+
+Na pełnym indeksie zmierzymy też czas startu, pamięć i~czas jednego pytania o~treść, o~trend i~o~autora. Pomiar zrobimy na komputerze autorów, bez kart z~Kaggle. Chcemy wiedzieć, czy rozmowę da się prowadzić bez długiej przerwy między zdaniami.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|L{0.36\textwidth}|L{0.20\textwidth}|Y|}
+\hline
+\textbf{Zadanie} & \textbf{Stan} & \textbf{Uwaga} \\
+\hline
+Wczytanie pełnego pliku & ukończone & 621\,515 rekordów w~SQLite \\
+\hline
+Wektory BAAI/bge-m3 na Kaggle & ukończone & dwie karty T4, 6514 sekund \\
+\hline
+Baza Chroma & ukończona & gotowe wektory, bez ponownego liczenia \\
+\hline
+Podział na sześć grup & wdrożony & sposób oceny dopiero ustalamy \\
+\hline
+Wyszukiwanie i~okno rozmowy & wdrożone & porównanie trzech wariantów przed nami \\
+\hline
+Porównanie modeli językowych & przed nami & teraz llama3.2:3b; obok Qwen3 4B i~8B \\
+\hline
+Czas i~pamięć pełnego zbioru & przed nami & pomiar na komputerze autorów \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section*{Przypadki użycia}
+
+Przypadki z~pierwszego dokumentu da się już przejść na pełnym zbiorze. Poniżej jest, jak to wygląda teraz.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|c|L{0.28\textwidth}|Y|}
+\hline
+\textbf{ID} & \textbf{Przypadek} & \textbf{Stan} \\
+\hline
+PU-01 & Wczytanie zbioru &
+W~SQLite i~w~Chromie jest 621\,515 publikacji. Brak pliku nie kasuje tego, co już zostało wczytane. \\
+\hline
+PU-02 & Znalezienie prac po treści &
+Pytanie idzie wektorem BAAI/bge-m3 i~wyszukiwaniem słownym. Porównanie wariantów na pełnym indeksie jest przed nami. \\
+\hline
+PU-03 & Dominujące kierunki &
+Odpowiedź bierze sześć zapisanych grup. Jak ocenimy ten podział, ustalimy później. \\
+\hline
+PU-04 & Wzorzec rozwoju kierunku &
+Lata 1900--2026. Przy jednym roku podajemy liczebność za ten rok. \\
+\hline
+PU-05 & Autorzy wskazanej pracy &
+Pokazujemy osoby zapisane przy tym rekordzie. \\
+\hline
+PU-06 & Dorobek osoby &
+Widać dopasowane osoby, ich publikacje, lata i~kierunki. Brak osoby mówimy wprost. \\
+\hline
+PU-07 & Autorzy kierunku &
+Bierzemy osoby, których prace wpadły do danej grupy, razem z~tymi pracami. \\
+\hline
+PU-08 & Dopytanie &
+Kolejne zdanie w~czacie może dotyczyć pracy albo osoby z~historii. Jak się nie da jej ustalić, prosimy o~doprecyzowanie. \\
+\hline
+PU-09 & Wiele czatów &
+Nowy czat może dostać historię innego czatu albo zacząć bez niej. Do starych czatów da się wrócić. \\
+\hline
+PU-10 & Wypowiedź pusta albo spoza zbioru &
+Baza zostaje bez zmian. Przy powitaniu proponujemy pytania o~publikacje. \\
+\hline
+\end{tabularx}
+\end{center}
+
+\vspace{1.2em}
+Podpis promotora (akceptacja etapu 3): \dotfill
+
+\vspace{0.8em}
+Data: \dotfill
+
+\end{document}

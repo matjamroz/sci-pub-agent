@@ -17,15 +17,14 @@ from src.ingest.chunking import chunk_publication
 from src.ingest.load_jsonl import load_jsonl
 from src.ingest.store import MetadataStore
 from src.llm.client import LLMClient
-from src.retrieve.hybrid import HybridRetriever
-from src.retrieve.index import VectorIndex
+from src.retrieve.index import VectorIndex, VectorRetriever
 
 
 @dataclass
 class Runtime:
     store: MetadataStore
     vector_index: VectorIndex
-    retriever: HybridRetriever
+    retriever: VectorRetriever
     analytics: AnalyticsTools
     agent: AgentOrchestrator
     chunks: list[dict]
@@ -128,6 +127,37 @@ def build_index(
     return summary
 
 
+def chunks_from_database(store: MetadataStore) -> list[dict]:
+    """Lexical corpus kept for HybridRetriever. The answer path does not load it."""
+    conn = store.connection()
+    rows = conn.execute(
+        "SELECT object_id, title, year, doi, abstract, keywords, topic_id, topic_label FROM publications"
+    ).fetchall()
+    chunks: list[dict] = []
+    for r in rows:
+        text = "\n\n".join(
+            p for p in [r["title"], r["abstract"] or "", r["keywords"] or ""] if p
+        )
+        chunks.append(
+            {
+                "id": f"{r['object_id']}::0",
+                "text": text,
+                "metadata": {
+                    "object_id": r["object_id"],
+                    "title": r["title"],
+                    "year": r["year"] if r["year"] is not None else -1,
+                    "doi": r["doi"] or "",
+                    "topic_id": r["topic_id"] if r["topic_id"] is not None else -1,
+                    "topic_label": r["topic_label"] or "",
+                    "author_keys": "",
+                    "author_names": "",
+                    "chunk_index": 0,
+                },
+            }
+        )
+    return chunks
+
+
 def load_chunks(path: Optional[Path] = None) -> list[dict]:
     settings = get_settings()
     chunks_path = path or (settings.data_dir / "processed" / "chunks.jsonl")
@@ -148,35 +178,7 @@ def get_runtime() -> Runtime:
         build_index()
     store = MetadataStore(settings.sqlite_path)
     index = VectorIndex(settings.chroma_path)
-    chunks = load_chunks()
-    if not chunks:
-        # Rebuild BM25 corpus from DB abstracts if chunks missing
-        conn = store.connection()
-        rows = conn.execute(
-            "SELECT object_id, title, year, doi, abstract, keywords, topic_id, topic_label FROM publications"
-        ).fetchall()
-        for r in rows:
-            text = "\n\n".join(
-                p for p in [r["title"], r["abstract"] or "", r["keywords"] or ""] if p
-            )
-            chunks.append(
-                {
-                    "id": f"{r['object_id']}::0",
-                    "text": text,
-                    "metadata": {
-                        "object_id": r["object_id"],
-                        "title": r["title"],
-                        "year": r["year"] if r["year"] is not None else -1,
-                        "doi": r["doi"] or "",
-                        "topic_id": r["topic_id"] if r["topic_id"] is not None else -1,
-                        "topic_label": r["topic_label"] or "",
-                        "author_keys": "",
-                        "author_names": "",
-                        "chunk_index": 0,
-                    },
-                }
-            )
-    retriever = HybridRetriever(index, chunks)
+    retriever = VectorRetriever(index)
     analytics = AnalyticsTools(store)
     agent = AgentOrchestrator(retriever, analytics, LLMClient())
     return Runtime(
@@ -185,5 +187,5 @@ def get_runtime() -> Runtime:
         retriever=retriever,
         analytics=analytics,
         agent=agent,
-        chunks=chunks,
+        chunks=[],
     )

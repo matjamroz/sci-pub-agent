@@ -54,6 +54,29 @@ class VectorIndex:
             )
         return len(ids)
 
+    def upsert_prepared(
+        self,
+        ids: list[str],
+        documents: list[str],
+        metadatas: list[dict],
+        embeddings,
+    ) -> int:
+        """Store already computed vectors. Does not call the embedding model."""
+        if not ids:
+            return 0
+        batch = 256
+        for i in range(0, len(ids), batch):
+            chunk = embeddings[i : i + batch]
+            if hasattr(chunk, "tolist"):
+                chunk = chunk.tolist()
+            self.collection.upsert(
+                ids=ids[i : i + batch],
+                documents=documents[i : i + batch],
+                metadatas=metadatas[i : i + batch],
+                embeddings=chunk,
+            )
+        return len(ids)
+
     def query(
         self,
         query: str,
@@ -85,3 +108,23 @@ class VectorIndex:
                 }
             )
         return hits
+
+
+class VectorRetriever:
+    """Cosine search of the question against publication vectors.
+
+    This is the answer-path retriever. HybridRetriever remains available for a
+    lexical comparison and is not used when building a reply.
+    """
+
+    def __init__(self, vector_index: VectorIndex):
+        self.vector_index = vector_index
+
+    def search(
+        self,
+        query: str,
+        top_k: int = 10,
+        where: Optional[dict[str, Any]] = None,
+        **_: Any,
+    ) -> list[dict]:
+        return self.vector_index.query(query, top_k=top_k, where=where)
